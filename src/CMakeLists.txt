@@ -3,6 +3,8 @@ project(pic_stream)
 
 find_package(OpenCV 3 REQUIRED)
 
+set(CMAKE_CXX_FLAGS "-gdwarf-3 -std=gnu++11")
+
 add_executable(pic_client socket_client.cpp)
 add_executable(pic_server socket_server.cpp)
 
