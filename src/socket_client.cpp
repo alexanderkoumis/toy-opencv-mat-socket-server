@@ -1,5 +1,6 @@
 // #include <cstring>
 #include <cstdio>
+#include <string>
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -15,12 +16,8 @@ void GenerateImage(cv::Mat& image);
 void SendImage(cv::Mat& image);
 
 int pic_num = 0;
-int server_fdesc;
-struct sockaddr_in server_addr_2;
-//struct addrinfo server_addr_info;
-struct hostent* server_hostent;
-
-cv::Mat last_image;
+int socket_fdesc;
+struct addrinfo* addr_resp;
 
 int main(int argc, char** argv) {
   ConnectToServer();
@@ -33,47 +30,34 @@ int main(int argc, char** argv) {
 }
 
 void ConnectToServer() {
-   char buffer[256];
+  struct addrinfo addr_hints;
 
-   // Create socket file descriptor for server
-   server_fdesc = socket(AF_INET, SOCK_STREAM, 0);
-   if (server_fdesc < 0){
-      perror("ERROR opening socket");
-      exit(1);
-   }
-    // Taks a hostname and returns a struct "hostent" containing the IP address,
-    // address type, length of the addresses, and list of addresses
-    // Deprecated - Use getaddrinfo()
-       server_hostent = gethostbyname(hostname); // guess this is deprecated
-       if (server_hostent == NULL) {
-          printf("ERROR, no such host\n");
-          exit(1);
-       }
-//    if (getAddrinfo(hostname, NULL, &hints, &res) != 0) {
-//      perror("Couldn't connect to host!");
-//      exit(1);
-//    }
+  // Specify criteria for address structs to be returned by getAddrinfo
+  memset(&addr_hints, 0, sizeof(addr_hints));
+  addr_hints.ai_socktype = SOCK_STREAM;
+  addr_hints.ai_family = AF_INET;
 
+  // Populate addr_info_resp with address responses matching hints
+  if (getaddrinfo(hostname, std::to_string(server_port).c_str(), &addr_hints,
+                  &addr_resp) != 0) {
+    perror("Couldn't connect to host!");
+    exit(1);
+  }
 
-   // Zero out address struct that will be used
-   memset((char*) &server_addr_2, 0, sizeof(server_addr_2));
+  // Create socket file descriptor for server
+  socket_fdesc = socket(addr_resp->ai_family, addr_resp->ai_socktype,
+                        addr_resp->ai_protocol);
+  if (socket_fdesc == -1) {
+    perror("Error opening socket");
+    exit(1);
+  }
 
-   // Set address struct family
-   server_addr_2.sin_family = AF_INET;
-
-   // Set address struct address, copying value from server_hostent
-   memcpy((char *)&server_addr_2.sin_addr.s_addr, (char *)server_hostent->h_addr,
-          server_hostent->h_length);
-
-   // Set address struct port
-   server_addr_2.sin_port = htons(server_port);
-
-   // Connect to server specified in address struct, assign process to server
-   // file descriptor
-   if (connect(server_fdesc, (const sockaddr*)&server_addr_2, sizeof(server_addr_2)) < 0) {
-      perror("ERROR connecting!\n");
-      exit(1);
-   }
+  // Connect to server specified in address struct, assign process to server
+  // file descriptor
+  if (connect(socket_fdesc, addr_resp->ai_addr, addr_resp->ai_addrlen) == -1) {
+    perror("Error connecting to address");
+    exit(1);
+  }
 }
 
 void GenerateImage(cv::Mat& image) {
@@ -93,6 +77,6 @@ void GenerateImage(cv::Mat& image) {
 void SendImage(cv::Mat& image) {
     image = image.reshape(0,1);
     int image_size = image.total() * image.elemSize();
-    int bytes = send(server_fdesc, image.data, image_size, 0);
+    int bytes = send(socket_fdesc, image.data, image_size, 0);
     printf("Sent %d-byte image to port %d\n", image_size, server_port);
 }
