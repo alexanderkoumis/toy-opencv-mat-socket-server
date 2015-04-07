@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cctype> // isdigit
-#include <sys/types.h> 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <netinet/in.h>
@@ -14,14 +14,16 @@
 
 #include "socket_common.hpp"
 
-class Server {
+class SocketServer {
  public:
-  Server(int port, std::string out_path);
+  SocketServer(int port, std::string out_path);
   void ConnectToNetwork();
+  void ReceiveImageDims();
   void ReceiveImage(cv::Mat& image);
   void WriteImage(cv::Mat& image);
 
  private:
+  cv::Size2i image_dims_;
   struct sockaddr_in server_addr_;
   struct sockaddr_in client_addr_;
   std::string pic_filename_;
@@ -34,7 +36,8 @@ class Server {
   int sock_fdesc_conn_;
 };
 
-Server::Server(int port, std::string out_path) :
+SocketServer::SocketServer(int port, std::string out_path) :
+    image_dims_(cv::Size2i(0, 0)),
     out_path_(out_path),
     client_len_(0),
     server_addr_size_(sizeof(server_addr_)),
@@ -45,7 +48,7 @@ Server::Server(int port, std::string out_path) :
   client_len_ = server_addr_size_; // idk
 }
 
-void Server::ConnectToNetwork() {
+void SocketServer::ConnectToNetwork() {
 
   // Initialize Socket
   sock_fdesc_init_ = socket(AF_INET, SOCK_STREAM, 0);
@@ -53,7 +56,7 @@ void Server::ConnectToNetwork() {
     perror("Couldn't create socket!\n");
     exit(1);
   }
-  
+
   // Zero out server address struct
   memset((char*)&server_addr_, 0, server_addr_size_);
 
@@ -68,7 +71,7 @@ void Server::ConnectToNetwork() {
     perror("ERROR! Couldn't bind initial socket file descriptor!");
     exit(1);
   }
-  
+
   // Enable listening on initial socket file descriptor
   listen(sock_fdesc_init_, 5);
 
@@ -82,15 +85,59 @@ void Server::ConnectToNetwork() {
   }
 }
 
-void Server::ReceiveImage(cv::Mat& image) {
+void SocketServer::ReceiveImageDims() {
+
+  int dims_ptr(0);
+  ssize_t bytes_sent(0);
+  size_t dims_size(0);
+
+  // image_dims_ = cv::Size2i(0, 0);
+  dims_size = sizeof(image_dims_);
+//  uchar sock_data[dims_size];
+  // 
+  // int rows = 0;
+  // int cols = 0;
+
+  if (bytes_sent = recv(sock_fdesc_conn_, &image_dims_.rows,
+                        sizeof(&image_dims_.rows), 0) == -1) {
+    printf("ERROR!: recv failed\n"
+           "sock_fdesc: %d\n"
+           "rows: %d\n"
+           "bytes_sent: %d\n", sock_fdesc_conn_, dims_size, bytes_sent);
+    exit(1);
+  }
+
+  if (bytes_sent = recv(sock_fdesc_conn_, &image_dims_.cols,
+                        sizeof(&image_dims_.cols), 0) == -1) {
+    printf("ERROR!: recv failed\n"
+           "sock_fdesc: %d\n"
+           "cols: %d\n"
+           "bytes_sent: %d\n", sock_fdesc_conn_, dims_size, bytes_sent);
+    exit(1);
+  }
+  // if (bytes_sent = recv(sock_fdesc_conn_, (char*)&image_dims_,
+  //                       sizeof(image_dims_), 0) == -1) {
+  //   printf("ERROR!: recv failed\n"
+  //          "sock_fdesc: %d\n"
+  //          "image_size: %d\n"
+  //          "bytes_sent: %d\n", sock_fdesc_conn_, dims_size, bytes_sent);
+  //   exit(1);
+  // }
+
+  printf("Image dimensions: [%dx%d]\n", image_dims_.height, image_dims_.width);
+
+}
+
+void SocketServer::ReceiveImage(cv::Mat& image) {
 
   int bytes(0);
   int image_ptr(0);
   int image_size(0);
 
   // Reset image
-  image = cv::Mat::zeros(height, width, CV_8UC3);
-  
+  // image = cv::Mat::zeros(image_dims_, CV_8UC3);
+  image = cv::Mat::zeros(image_dims_, CV_8UC4);
+
   // Get image size
   image_size = image.total() * image.elemSize();
 
@@ -109,12 +156,13 @@ void Server::ReceiveImage(cv::Mat& image) {
     }
   }
   // Write image data to cv::Mat
-  for (int i = 0;  i < height; ++i) {
-    for (int j = 0; j < width; ++j) {                                     
-      image.at<cv::Vec3b>(i,j) = cv::Vec3b(sock_data[image_ptr+0],
+  for (int i = 0;  i < image_dims_.height; ++i) {
+    for (int j = 0; j < image_dims_.width; ++j) {
+      image.at<cv::Vec4b>(i,j) = cv::Vec4b(sock_data[image_ptr+0],
                                            sock_data[image_ptr+1],
-                                           sock_data[image_ptr+2]);
-      image_ptr += 3;
+                                           sock_data[image_ptr+2],
+                                           sock_data[image_ptr+3]);
+      image_ptr += 4;
     }
   }
   std::ostringstream oss;
@@ -122,7 +170,7 @@ void Server::ReceiveImage(cv::Mat& image) {
   pic_filename_ = oss.str();
 }
 
-void Server::WriteImage(cv::Mat& image) {
+void SocketServer::WriteImage(cv::Mat& image) {
   cv::imwrite(pic_filename_, image);
 }
 
@@ -152,8 +200,9 @@ void ParseArgs(int argc, char** argv) {
 
 int main(int argc, char** argv) {
   ParseArgs(argc, argv);
-  std::unique_ptr<Server> server_ptr(new Server(atoi(argv[1]), argv[2]));
+  std::unique_ptr<SocketServer> server_ptr(new SocketServer(atoi(argv[1]), argv[2]));
   server_ptr->ConnectToNetwork();
+  server_ptr->ReceiveImageDims();
   while(1) {
     cv::Mat image;
     server_ptr->ReceiveImage(image);
