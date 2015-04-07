@@ -3,7 +3,7 @@ project(toy-opencv-sockets)
 
 find_package(OpenCV 3 REQUIRED)
 
-set(CMAKE_CXX_FLAGS "-gdwarf-3 -std=gnu++11")
+set(CMAKE_CXX_FLAGS "-std=c++11")
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}

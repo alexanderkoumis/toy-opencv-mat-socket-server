@@ -67,12 +67,12 @@ void SocketServer::ReceiveImageDims() {
   ssize_t bytes_sent = 0;
   size_t dims_size = 0;
 
-  int rows = 0;
   int cols = 0;
+  int rows = 0;
 
   size_t sizeof_dims = sizeof(image_dims_.height);
 
-  if (bytes_sent = recv(sock_fdesc_conn_, (char*)&rows, sizeof_dims, 0) == -1) {
+  if (bytes_sent = recv(sock_fdesc_conn_, (char*)&cols, sizeof_dims, 0) == -1) {
     printf("ERROR!: recv failed\n"
            "sock_fdesc: %d\n"
            "image_size: %zu\n"
@@ -83,7 +83,7 @@ void SocketServer::ReceiveImageDims() {
       printf("Received rows: %d, cols: %d\n", rows, cols);
     }
 
-  if (bytes_sent = recv(sock_fdesc_conn_, (char*)&cols, sizeof_dims, 0) == -1) {
+  if (bytes_sent = recv(sock_fdesc_conn_, (char*)&rows, sizeof_dims, 0) == -1) {
     printf("ERROR!: recv failed\n"
            "sock_fdesc: %d\n"
            "image_size: %zu\n"
@@ -91,9 +91,9 @@ void SocketServer::ReceiveImageDims() {
     exit(1);
   }
 
-  image_dims_ = cv::Size2i(rows, cols);
+  image_dims_ = cv::Size2i(cols, rows);
 
-  printf("Image dimensions: [%dx%d]\n", rows, cols);
+  printf("Image dimensions: [%dx%d]\n", cols, rows);
 
 }
 

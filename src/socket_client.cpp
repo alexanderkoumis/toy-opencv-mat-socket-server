@@ -50,15 +50,15 @@ void SocketClient::ConnectToServer() {
   free(addrinfo_resp);
 }
 
-void SocketClient::SendImageDims(int rows, int cols) {
+void SocketClient::SendImageDims(int cols, int rows) {
   // Send number of rows to server
-  if (send(socket_fdesc_, (char*)&rows, sizeof(rows), 0) == -1) {
+  if (send(socket_fdesc_, (char*)&cols, sizeof(cols), 0) == -1) {
     perror("Error sending rows");
     exit(1);
   }
 
   // Send number of cols to server
-  if (send(socket_fdesc_, (char*)&cols, sizeof(cols), 0) == -1) {
+  if (send(socket_fdesc_, (char*)&rows, sizeof(rows), 0) == -1) {
     perror("Error sending cols");
     exit(1);
   }
