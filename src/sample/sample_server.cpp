@@ -1,4 +1,5 @@
-#include <memory>           // unique_ptr
+#include <memory> // unique_ptr
+#include <sys/stat.h>
 
 #include <opencv2/core.hpp> // Mat
 

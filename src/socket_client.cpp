@@ -2,10 +2,10 @@
 
 #include <memory> // unique_ptr
 #include <cstdio>
+#include <netdb.h>
+#include <netinet/in.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
 
 #include <opencv2/highgui.hpp>
 

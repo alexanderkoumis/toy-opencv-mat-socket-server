@@ -6,14 +6,10 @@
 #include <cstdio>
 #include <cstring>
 #include <cctype> // isdigit
-
-#include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/stat.h>
 #include <netinet/in.h>
 
 #include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
 
 class SocketServer {
  public:

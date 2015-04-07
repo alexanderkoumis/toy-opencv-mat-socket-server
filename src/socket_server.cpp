@@ -1,6 +1,9 @@
 #include "socket_server.hpp"
 
 #include <unistd.h> // close
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include <opencv2/imgcodecs.hpp>
 
 SocketServer::SocketServer(int port, std::string out_path) :

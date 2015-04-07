@@ -1,6 +1,6 @@
 #include "socket_client.hpp"
 
-#include <memory>  // unique_ptr
+#include <memory> // unique_ptr
 #include <cstdlib> // atoi
 
 void GenerateImage(int rows, int cols, cv::Mat& image) {
@@ -42,5 +42,5 @@ int main(int argc, char** argv) {
     GenerateImage(cols, rows, image);
     client_ptr->SendImage(image);
   }
-  return 0;
+  return 1; // Should not return
 }
