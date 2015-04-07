@@ -1,49 +1,21 @@
+#include "socket_client.hpp"
+
 #include <memory> // unique_ptr
 #include <cstdio>
-#include <string>
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
 
-#include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 
-#include "socket_common.hpp"
-
-void GenerateImage(cv::Mat& image) {
-  int salt(0);
-  image = cv::Mat::zeros(height, width, CV_8UC3);
-  for (int row = 0; row < height; ++row) {
-    for (int col = 0; col < width; ++col) {
-      int randy = (salt % 23 == 0) ? rand() % 255 : 0;
-      image.at<cv::Vec3b>(row, col)[0] = randy;
-      image.at<cv::Vec3b>(row, col)[1] = randy;
-      image.at<cv::Vec3b>(row, col)[2] = randy;
-      salt += 7;
-    }
-  }
-}
-
-class Client {
- public:
-  Client(const char* hostname, int port);
-  void ConnectToServer();
-  void SendImage(cv::Mat& image);
- private:
-  const char* hostname_;
-  int port_;
-  int pic_num_;
-  int socket_fdesc_;
-};
-
-Client::Client(const char* hostname, int port) :
+SocketClient::SocketClient(const char* hostname, int port) :
     hostname_ (hostname),
     port_(port),
     pic_num_(0),
     socket_fdesc_(0) {}
 
-void Client::ConnectToServer() {
+void SocketClient::ConnectToServer() {
   struct addrinfo addrinfo_hints;
   struct addrinfo* addrinfo_resp;
 
@@ -78,34 +50,24 @@ void Client::ConnectToServer() {
   free(addrinfo_resp);
 }
 
-void Client::SendImage(cv::Mat& image) {
-    image = image.reshape(0,1);
-    int image_size = image.total() * image.elemSize();
-    int bytes = send(socket_fdesc_, image.data, image_size, 0);
-    printf("Sent %d-byte image to port %d\n", image_size, port_);
-}
+void SocketClient::SendImageDims(int rows, int cols) {
+  // Send number of rows to server
+  if (send(socket_fdesc_, (char*)&rows, sizeof(rows), 0) == -1) {
+    perror("Error sending rows");
+    exit(1);
+  }
 
-void AssertCond(bool assert_cond, const char* fail_msg) {
-  if (!assert_cond) {
-    printf("Error: %s\nUsage: ./pic-client <port>\n", fail_msg);
+  // Send number of cols to server
+  if (send(socket_fdesc_, (char*)&cols, sizeof(cols), 0) == -1) {
+    perror("Error sending cols");
     exit(1);
   }
 }
 
-void ParseArgs(int argc, char** argv) {
-  AssertCond(argc == 2, "Wrong number of arguments");
-}
-
-int main(int argc, char** argv) {
-  ParseArgs(argc, argv);
-  int port = atoi(argv[1]);
-  const char hostname[] = "localhost";
-  std::unique_ptr<Client> client_ptr(new Client(hostname, port));
-  client_ptr->ConnectToServer();
-  while (1) {
-    cv::Mat image;
-    GenerateImage(image);
-    client_ptr->SendImage(image);
-  }
-  return 0;
+void SocketClient::SendImage(cv::Mat& image) {
+  image = image.reshape(0,1);
+  int image_size = image.total() * image.elemSize();
+  int num_bytes = send(socket_fdesc_, image.data, image_size, 0);
+  printf("Sent %d bytes of %d-byte image to port %d\n",
+         num_bytes, image_size, port_);
 }
