@@ -93,11 +93,8 @@ void SocketServer::ReceiveImageDims() {
            "bytes_sent: %zu\n", sock_fdesc_conn_, dims_size, bytes_sent);
     exit(1);
   }
-
   image_dims_ = cv::Size2i(cols, rows);
-
   printf("Image dimensions: [%dx%d]\n", cols, rows);
-
 }
 
 void SocketServer::ReceiveImage(cv::Mat& image) {
