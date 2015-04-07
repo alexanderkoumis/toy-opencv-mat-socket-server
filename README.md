@@ -34,7 +34,8 @@ while(1) {
 return 1;
 ```
 
-After the server has received the dimensions, it saves received images to the user-supplied path. The sample client obeys this protocol by first sending the image dimensions, followed by a stream of images, until the program is killed.
+After the server has received the dimensions, it saves received images to the user-supplied path.
+The sample client obeys this protocol by first sending the image dimensions, followed by a stream of images, until the program is killed.
 ```c++
 client_ptr->ConnectToServer();
 client_ptr->SendImageDims(cols, rows);
