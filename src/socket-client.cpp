@@ -64,7 +64,7 @@ int SocketClient::Connect() {
   return 0;
 }
 
-void SocketClient::SendImage(const cv::Mat& image_2d) {
+void SocketClient::SendImage(const cv::Mat& image_2d) const {
 
   cv::Mat image_1d = image_2d.reshape(0,1);
   size_t image_size = image_1d.total() * image_1d.elemSize();

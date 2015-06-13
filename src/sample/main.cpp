@@ -85,7 +85,6 @@ void LaunchServer(const std::unique_ptr<SocketServer>& server_ptr,
     }
   });
   send_thread = std::thread(std::move(t_serv_init));
-  send_thread.detach();
 }
 
 void TransmitImage(const cv::Mat& image, cv::Size2i& image_dims,

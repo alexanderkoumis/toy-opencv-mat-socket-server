@@ -17,7 +17,7 @@ class SocketClient {
   SocketClient(const SockInfo_t& client_info);
   ~SocketClient();
   int Connect();
-  void SendImage(const cv::Mat& image);
+  void SendImage(const cv::Mat& image) const;
   void SendImageDims(int rows, const int cols) const;
 
  private:
