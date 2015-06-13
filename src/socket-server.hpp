@@ -14,30 +14,21 @@
 
 #include <opencv2/core.hpp>
 
-
-
-
 class SocketServer {
  public:
   typedef std::unique_ptr<SocketServer> SocketServerPtr;
   typedef std::tuple<int, struct sockaddr_in, socklen_t> SockInfo_t;
 
-  SocketServer(const int sock_fdesc);
-
   static int CreateSocket(const int port, SockInfo_t& sock_info);
   static int Accept(const SockInfo_t& sock_info);
 
+  SocketServer(const int sock_fdesc);
   cv::Size2i ReceiveImageDims() const;
-
   void ReceiveImage(const cv::Size2i& image_sz, cv::Mat& image) const;
   void ReadErrors();
 
  private:
-  std::mutex q_lock_;
   int sock_fdesc_;
 };
-
-
-
 
 #endif

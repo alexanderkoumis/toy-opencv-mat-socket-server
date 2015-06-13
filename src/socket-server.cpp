@@ -3,17 +3,13 @@
 #include <signal.h>   // sigaction
 #include <unistd.h>   // close
 #include <sys/wait.h> // waitpid
-#include <arpa/inet.h> // inet_ntop
 
-#include <chrono>
-#include <condition_variable>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
 #include <string>
 #include <sstream>
 #include <thread>
-
 
 #include <opencv2/imgcodecs.hpp>
 
@@ -103,7 +99,8 @@ int SocketServer::Accept(const SockInfo_t& sock_info) {
 
   // Block process until connection with client has been established.
   // 'sock_fdesc_new' set as new file descriptor to be used for communication
-  sock_fdesc_new = accept(sock_fdesc_init, (struct sockaddr *)&client_addr, &client_len);
+  sock_fdesc_new = accept(sock_fdesc_init, (struct sockaddr *)&client_addr,
+                          &client_len);
   if (sock_fdesc_new == -1) {
     perror("server.accept");
     exit(1);
@@ -123,16 +120,16 @@ cv::Size2i SocketServer::ReceiveImageDims() const {
   size_t sizeof_dims = sizeof(int);
 
   if ((bytes_sent = recv(sock_fdesc_, (char*)&cols, sizeof_dims, 0)) == -1) {
-    printf("ERROR!: recv failed\n"
-           "sock_fdesc: %d\n"
+    perror("server.ReceiveImageDims(1).recv");
+    printf("sock_fdesc: %d\n"
            "image_size: %zu\n"
            "bytes_sent: %zu\n", sock_fdesc_, dims_size, bytes_sent);
     exit(1);
   }
 
   if ((bytes_sent = recv(sock_fdesc_, (char*)&rows, sizeof_dims, 0)) == -1) {
-    printf("ERROR!: recv failed\n"
-           "sock_fdesc: %d\n"
+    perror("server.ReceiveImageDims(2).recv");
+    printf("sock_fdesc: %d\n"
            "image_size: %zu\n"
            "bytes_sent: %zu\n", sock_fdesc_, dims_size, bytes_sent);
     exit(1);
