@@ -33,9 +33,6 @@ class SocketServer {
   void ReadErrors();
 
  private:
-  std::queue<std::string> q_err_messages_;
-
-
   std::mutex q_lock_;
   int sock_fdesc_;
 };

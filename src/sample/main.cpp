@@ -11,13 +11,9 @@ std::once_flag once_serv;
 std::unique_ptr<SocketClient> client_ptr;
 std::unique_ptr<SocketServer> server_ptr;
 
-std::mutex send_mutex;
-std::condition_variable send_cond;
-std::thread serv_thread;
+std::thread send_thread;
 
-bool server_ready(false);
-
-int ClientServerConnect(const std::string serv_hostname, const int port) {
+int ClientServerConnect(const std::string hostname, const int port) {
 
   SocketClient::SockInfo_t client_info;
   SocketServer::SockInfo_t server_info;
@@ -27,7 +23,7 @@ int ClientServerConnect(const std::string serv_hostname, const int port) {
     return -1;
   }
 
-  if (SocketClient::CreateSocket(serv_hostname.c_str(), port, client_info) == -1) {
+  if (SocketClient::CreateSocket(hostname.c_str(), port, client_info) == -1) {
     printf("Error creating client socket\n");
     return -1;
   }
@@ -61,49 +57,46 @@ int ClientServerConnect(const std::string serv_hostname, const int port) {
 
 void TransmitDims(const cv::Mat& image, cv::Size2i& image_dims) {
 
-  std::future<cv::Size2i> f_server_recv_dims = std::async(std::launch::async, [&]() {
+  std::future<cv::Size2i> s_recv_dims = std::async(std::launch::async, [&]() {
     return server_ptr->ReceiveImageDims();
   });
 
-  std::future<void> f_client_send_dims = std::async(std::launch::async, [&]() {
+  std::future<void> c_send_dims = std::async(std::launch::async, [&]() {
     return client_ptr->SendImageDims(image.cols, image.rows);
   });
 
-  f_client_send_dims.wait();
-  f_server_recv_dims.wait();
-  image_dims = f_server_recv_dims.get();
+  c_send_dims.wait();
+  s_recv_dims.wait();
+  image_dims = s_recv_dims.get();
   printf("server.dims: [%dx%d]\n", image_dims.width, image_dims.height);
 }
 
 void LaunchServer(const std::unique_ptr<SocketServer>& server_ptr,
                   const cv::Size2i& image_dims,
                   const std::string& out_dir) {
-
-  const std::string outfile_base = out_dir + "/pic";
   static int pic_num = 0;
-
   std::packaged_task<void()> t_serv_init ([&](){
-    cv::Mat image;
-    printf("server.Run: Waiting for image\n");
-    server_ptr->ReceiveImage(image_dims, image);
-    std::string outfile_full = outfile_base + std::to_string(pic_num++) + ".png";
-    std::cout << "Writing image to: " << outfile_full << std::endl;
-    cv::imwrite(outfile_full, image);
-    printf("server.Run: Received image\n");
+    while (1) {
+      cv::Mat image;
+      const std::string filename = Filename(out_dir, "pic", pic_num++, "jpg");
+      server_ptr->ReceiveImage(image_dims, image);
+      cv::imwrite(filename, image);
+      printf("server.Run: Received image, wrote to %s\n", filename.c_str());
+    }
   });
-
-
- std::future<void> f_serv_init = t_serv_init.get_future();
- std::thread(std::move(t_serv_init)).detach();
+  send_thread = std::thread(std::move(t_serv_init));
+  send_thread.detach();
 }
 
-void TransmitImage(const cv::Mat& image, cv::Size2i& image_dims, const std::string out_dir) {
+void TransmitImage(const cv::Mat& image, cv::Size2i& image_dims,
+                   const std::string out_dir) {
 
-  std::call_once(once_dims, TransmitDims, std::cref(image), std::ref(image_dims));
-  std::call_once(once_serv, LaunchServer, std::cref(server_ptr), std::cref(image_dims), std::ref(out_dir));
-
+  std::call_once(once_dims, TransmitDims, std::cref(image),
+                                          std::ref(image_dims));
+  std::call_once(once_serv, LaunchServer, std::cref(server_ptr),
+                                          std::cref(image_dims),
+                                          std::ref(out_dir));
   client_ptr->SendImage(image);
-
 }
 
 int main(int argc, char** argv) {
@@ -123,7 +116,6 @@ int main(int argc, char** argv) {
   LoadImages(in_dir, images);
 
 
-
   if (ClientServerConnect(hostname, port) == -1) {
     printf("Error creating socket client/server pair\n");
     return 1;
@@ -134,12 +126,16 @@ int main(int argc, char** argv) {
     return 1;
   }
 
+  printf("This many images: %zu\n", images.size());
   for (auto& image : images) {
+    static int num = 0;
+    printf("Sending image %d/%zu\n", num++, images.size());
     TransmitImage(image, image_dims, out_dir);
   }
 
+  if (send_thread.joinable()) {
+    send_thread.join();
+  }
 
-  printf("hihihihi\n");
-  serv_thread.join();
   return 0;
 }

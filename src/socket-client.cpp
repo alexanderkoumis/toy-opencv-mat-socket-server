@@ -20,7 +20,8 @@ SocketClient::~SocketClient() {
   close(socket_fdesc_);
 }
 
-int SocketClient::CreateSocket(const char* serv_hostname, const int port, SockInfo_t& sock_info) {
+int SocketClient::CreateSocket(const char* serv_hostname, const int port,
+                               SockInfo_t& sock_info) {
   struct addrinfo addrinfo_hints;
   struct addrinfo* addrinfo_resp;
 
@@ -48,7 +49,8 @@ int SocketClient::CreateSocket(const char* serv_hostname, const int port, SockIn
   }
 
   freeaddrinfo(addrinfo_resp);
-  sock_info = std::make_tuple(sock_fdesc, addrinfo_resp->ai_addr, addrinfo_resp->ai_addrlen);
+  sock_info = std::make_tuple(sock_fdesc, addrinfo_resp->ai_addr,
+                              addrinfo_resp->ai_addrlen);
 
   return 0;
 
@@ -67,16 +69,14 @@ void SocketClient::SendImage(const cv::Mat& image_2d) {
   cv::Mat image_1d = image_2d.reshape(0,1);
   size_t image_size = image_1d.total() * image_1d.elemSize();
   ssize_t bytes_sent_total = 0;
-  while (bytes_sent_total <= image_size) {
+  while (bytes_sent_total < (ssize_t)image_size) {
     ssize_t bytes_sent_once = send(socket_fdesc_, image_1d.data, image_size, 0);
     if (bytes_sent_once == -1) {
-      std::cout << "client.SendImage: failure" << std::endl;
       perror("client.send");
       exit(1);
     }
     else {
       bytes_sent_total += bytes_sent_once;
-      printf("Sent %zu bytes of %zu-byte image\n", bytes_sent_total, image_size);
     }
   }
 }

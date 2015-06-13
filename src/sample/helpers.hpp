@@ -26,7 +26,8 @@ std::string CurrFileAncestorDir(const std::string& curr_file,
 
 void LoadImages(const std::string dir, std::vector<cv::Mat>& images);
 
-
+std::string Filename(const std::string& parent_dir, const std::string& prefix,
+                     const int num, const std::string& ext);
 
 
 #endif

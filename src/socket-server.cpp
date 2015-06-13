@@ -141,42 +141,23 @@ cv::Size2i SocketServer::ReceiveImageDims() const {
   return cv::Size2i(cols, rows);
 }
 
-void SocketServer::ReceiveImage(const cv::Size2i& image_dims, cv::Mat& image) const {
+void SocketServer::ReceiveImage(const cv::Size2i& image_dims,
+                                cv::Mat& image) const {
 
-  int bytes = 0;
-//  int image_ptr = 0;
+  int bytes_recv = 0;
 
   // Reset image
-  image = cv::Mat::zeros(image_dims, CV_8UC3);
+  image = cv::Mat::zeros(image_dims.height, image_dims.width, CV_8UC3);
 
   // Get image size
-  const size_t image_size = (image.total() * image.elemSize());
+  const size_t image_size = image.total() * image.elemSize();
 
-  // Allocate space for image buffer
-  uchar sock_data[image_size];
-
-
-  // Save image data to buffer
-  size_t i = 0;
-
-  for (i = 0; i < image_size; i += bytes) {
-    bytes = recv(sock_fdesc_, sock_data + i, image_size - i, 0);
-    if (bytes == -1) {
-      printf("read image or somethin else idk\n");
-      break;
-    }
-  }
-
-
-  int image_ptr = 0;
-  // Write image data to cv::Mat
-  for (int r = 0;  r < image_dims.height; ++r) {
-    for (int c = 0; c < image_dims.width; ++c) {
-      image.at<cv::Vec3b>(c,r) = cv::Vec3b(sock_data[image_ptr+0],
-                                           sock_data[image_ptr+1],
-                                           sock_data[image_ptr+2]);
-      image_ptr += 3;
-      printf("[%d %d]\n", c, r);
+  // Save incoming data to image
+  for (size_t i = 0; i < image_size; i += bytes_recv) {
+    bytes_recv = recv(sock_fdesc_, image.data + i, image_size - i, 0);
+    if (bytes_recv == -1) {
+      perror("server.ReceiveImage.recv");
+      exit(1);
     }
   }
 }

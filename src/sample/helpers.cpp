@@ -48,3 +48,10 @@ void LoadImages(const std::string pic_dir, std::vector<cv::Mat>& images) {
     pclose(file);
   }
 }
+
+std::string Filename(const std::string& parent_dir, const std::string& prefix,
+                     const int num, const std::string& ext) {
+  std::ostringstream oss;
+  oss << parent_dir << "/" << prefix << num << "." << ext;
+  return oss.str();
+}

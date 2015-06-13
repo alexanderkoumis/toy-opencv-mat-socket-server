@@ -13,7 +13,8 @@ class SocketClient {
 
   SocketClient(const SockInfo_t& client_info);
   ~SocketClient();
-  static int CreateSocket(const char* serv_hostname, const int port, SockInfo_t& sock_info);
+  static int CreateSocket(const char* serv_hostname, const int port,
+                          SockInfo_t& sock_info);
   int Connect();
   void SendImage(const cv::Mat& image);
   void SendImageDims(int rows, const int cols) const;
