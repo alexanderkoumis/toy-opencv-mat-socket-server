@@ -1,4 +1,4 @@
-# Toy OpenCV Socket Server
+# A simple application to send and receive OpenCV images
 
 `socket_server.cpp` implements a TCP socket server listening for incoming OpenCV images (cv::Mat). `socket_client.cpp` provides a class that connects to a TCP socket and sends it images of configurable size.
 
