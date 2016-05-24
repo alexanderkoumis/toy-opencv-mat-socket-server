@@ -8,7 +8,7 @@
 
 ## Running the samples
 
-`src/sample_server.cpp` and `src/sample_client.cpp` demonstrate how to use the classes. Build the samples with cmake:
+`src/sample_server.cpp` and `src/sample_client.cpp` demonstrate how to use the classes. The `sample_client` streams data from the default camera (normally the webcam) and the `sample_server` shows them. Build the samples with cmake:
 ```bash
 mkdir build
 cd build
