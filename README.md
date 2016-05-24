@@ -51,7 +51,7 @@ while (1) {
 return 1;
 ```
 
-`THE SAMPLE CODE USES LOCALHOST FOR THE PURPOSE OF DEMONSTRATION AND TESTING. CHANGE hostname VARIABLE IN ORDER TO USE A PROPOR HOSTNAME IP ADDRESS.`
+`THE SAMPLE CODE USES LOCALHOST FOR THE PURPOSE OF DEMONSTRATION AND TESTING. CHANGE "hostname" VARIABLE IN ORDER TO USE A PROPOR HOSTNAME IP ADDRESS.`
 
 ## Credits
 This code builds upon `Toy OpenCV Socket Server` developed by *Alexander Koumis* and maintained at <https://github.com/alexanderkoumis/toy-opencv-mat-socket-server.git>
